@@ -1,0 +1,1550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>影石恶评监控报告 - 2026-05-06</title>
+<style>
+  :root { --bg:#141821; --panel:#1c2230; --border:#2a3040; --fg:#e6e9ef; --muted:#8899aa; --brand:#d4a017; --danger:#ff5c5c; --warn:#e8a33d; --ok:#5fbd7e; --info:#5b9bd5; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family: -apple-system, 'Microsoft YaHei', sans-serif; line-height:1.5; }
+  header { padding:22px 40px; background:linear-gradient(135deg,#1a2034,#0f1419); border-bottom:1px solid var(--border); }
+  header h1 { margin:0; font-size:26px; }
+  header .sub { color:var(--muted); margin-top:6px; font-size:13px; }
+  .warn-note { background:#3a2818; border:1px solid #8b5a2b; padding:10px 14px; border-radius:6px; font-size:12px; color:#ffd08a; margin:16px 40px; }
+
+  /* TL;DR */
+  .tldr { margin:16px 40px; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:18px 22px; }
+  .tldr h2 { margin:0 0 12px; font-size:16px; color:var(--brand); }
+  .insights { list-style:none; padding:0; margin:0; }
+  .insights li { padding:8px 0 8px 14px; border-left:3px solid #666; margin-bottom:6px; font-size:14px; }
+  .ins-icon { margin-right:8px; }
+
+  /* Actions */
+  .actions-block { margin:16px 40px; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:18px 22px; }
+  .actions-block h2 { margin:0 0 12px; font-size:16px; color:var(--brand); }
+  .actions-list { margin:0; padding-left:22px; }
+  .actions-list li { padding:6px 0; font-size:14px; }
+
+  /* KPI */
+  .summary { display:flex; gap:14px; padding:0 40px 16px; flex-wrap:wrap; }
+  .sum-card { flex:1; min-width:180px; background:var(--panel); padding:16px; border-radius:8px; border:1px solid var(--border); }
+  .sum-card .num { font-size:30px; font-weight:bold; color:var(--brand); }
+  .sum-card.danger .num { color:var(--danger); }
+  .sum-card.ok .num { color:var(--ok); }
+  .sum-card.warn .num { color:var(--warn); }
+  .sum-card .label { color:var(--muted); font-size:13px; margin-top:4px; }
+
+  /* Brand cards */
+  .brands-wrap { margin:16px 40px; }
+  .brands-wrap h2 { font-size:16px; color:var(--brand); margin:0 0 12px; }
+  .brand-cards { display:grid; grid-template-columns:repeat(auto-fit, minmax(420px, 1fr)); gap:14px; }
+  .brand-card { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px; }
+  .brand-head h3 { margin:0 0 8px; font-size:17px; }
+  .brand-head .stage { font-size:11px; background:#2a4060; padding:2px 8px; border-radius:10px; color:#c9daf0; font-weight:normal; margin-left:6px; }
+  .brand-kpis { display:flex; gap:12px; flex-wrap:wrap; font-size:13px; color:var(--muted); margin-bottom:10px; }
+  .brand-kpis b { color:var(--fg); font-size:15px; }
+  .brand-kpis .danger b { color:var(--danger); }
+  .sect { margin-top:10px; }
+  .sect-title { font-size:12px; color:var(--muted); margin-bottom:6px; }
+  .chip { display:inline-block; padding:3px 10px; background:#2a3040; color:#c9d4e0; border-radius:12px; margin:2px 4px 2px 0; font-size:12px; }
+  .chip-warn { background:#3a2820; color:#ffb890; border:1px solid #5a3020; }
+
+  /* Main */
+  .main { display:grid; grid-template-columns: 1fr 300px; gap:20px; padding:0 40px 40px; }
+  .main h2 { font-size:16px; color:var(--brand); margin:0 0 12px; }
+  .posts { display:flex; flex-direction:column; gap:14px; }
+  .post-card { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:16px; }
+  .post-head { display:flex; flex-wrap:wrap; gap:8px; align-items:center; font-size:13px; }
+  .post-head .platform { color:var(--muted); margin-left:auto; }
+  .post-head .kw { color:var(--muted); }
+  .post-title { font-size:16px; font-weight:bold; margin:10px 0 6px; }
+  .post-title a { color:var(--fg); text-decoration:none; }
+  .post-title a:hover { color:var(--brand); text-decoration:underline; }
+  .post-meta { color:var(--muted); font-size:12px; display:flex; gap:14px; flex-wrap:wrap; margin-bottom:8px; }
+  .post-desc { color:#c5cad5; font-size:13px; line-height:1.6; background:#171c28; padding:8px 12px; border-radius:4px; border-left:3px solid #2a5cb3; margin-bottom:10px; }
+  .neg-list { margin-top:10px; }
+  .neg-title { color:#ff9a9a; font-size:13px; margin-bottom:6px; font-weight:bold; }
+  .neg-comment { background:#2a1818; border:1px solid #4a2020; border-radius:4px; padding:8px 12px; margin-bottom:6px; }
+  .neg-head { font-size:12px; display:flex; gap:8px; margin-bottom:4px; flex-wrap:wrap; }
+  .neg-user { color:var(--brand); font-weight:bold; }
+  .neg-level { font-weight:bold; }
+  .neg-reason { color:var(--muted); }
+  .neg-content { font-size:13px; line-height:1.5; color:var(--fg); }
+  .neg-empty { color:var(--muted); font-size:12px; padding:6px 0; }
+  .actions { margin-top:10px; }
+  .btn { display:inline-block; padding:6px 14px; background:#2a5cb3; color:white; text-decoration:none; border-radius:4px; font-size:13px; }
+  .btn:hover { background:#3a6cc3; }
+
+  .badge { display:inline-block; padding:2px 8px; border-radius:3px; color:white; font-size:12px; }
+  .side { display:flex; flex-direction:column; gap:12px; }
+  .side-box { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:14px; }
+  .side-box h3 { margin:0 0 10px; font-size:14px; color:var(--brand); }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  td { padding:5px 0; border-bottom:1px solid var(--border); }
+  td:last-child { text-align:right; color:var(--brand); }
+  .danger-txt { color:var(--danger) !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🔍 影石恶评监控报告</h1>
+  <div class="sub">覆盖品牌：Luna / 影翎A1 / X线 / Go线 ｜ 平台：小红书 ｜ 更新：2026-05-06 21:40</div>
+</header>
+
+<div class="warn-note">⚠️ 所有恶评判定均为机器预筛，请逐条点击"打开原帖校准"核实真实性与上下文，再决定介入方式。</div>
+
+<div class="tldr">
+  <h2>📋 TL;DR 舆情结论</h2>
+  <ul class="insights"><li style="border-left-color:#c1272d"><span class="ins-icon">🔴</span>⚠️ 未维护恶评帖占 100%（40/40），口碑回应覆盖严重不足，建议立即介入</li><li style="border-left-color:#c48200"><span class="ins-icon">🟡</span>竞品拉踩最频繁：大疆（共 1 次提及），该品牌粉丝在影石内容下活跃</li><li style="border-left-color:#c48200"><span class="ins-icon">🟡</span>X线 是本轮恶评最集中的产品线（13 条恶评分散在 15 帖）</li><li style="border-left-color:#2a7cb3"><span class="ins-icon">🔵</span>恶评主类型：劝退退货（26 次），反映当前舆情焦点</li><li style="border-left-color:#2a7cb3"><span class="ins-icon">🔵</span>检出 2 条帖子下有疑似水军维护迹象，建议复核水军真实性（避免误判正常粉丝）</li></ul>
+</div>
+
+<div class="summary">
+  <div class="sum-card danger"><div class="num">40</div><div class="label">未维护恶评帖</div></div>
+  <div class="sum-card ok"><div class="num">0</div><div class="label">已有官方回复</div></div>
+  <div class="sum-card warn"><div class="num">2</div><div class="label">疑似水军维护</div></div>
+  <div class="sum-card"><div class="num">40</div><div class="label">恶评帖总数</div></div>
+</div>
+
+<div class="actions-block">
+  <h2>🎯 运营行动建议</h2>
+  <ol class='actions-list'><li>🎯 优先处置：当前 40 条未维护恶评帖，建议按互动量排序逐条介入。高互动帖（>50互动）优先回复，低互动帖可用小号私聊或引导正面用户回应</li><li>📣 X线 专项：15 条未维护，组织客服+KOC矩阵集中响应，同步复盘是否有共性投诉需要产品/客服侧反馈</li><li>🎪 反拉踩策略：大疆 粉在影石内容下活跃（1 次），避免正面硬刚，改用差异化场景内容引导（如影石擅长场景 vs 其擅长场景）</li><li>📊 日常：建议每日运行本监控，观察未维护量/拉踩量的变化趋势；每周导出交付运营会评</li><li>🛡️ 合规自检：2 条帖下检出疑似水军迹象（无论是否己方），建议人工复核后酌情优化维护话术多样性</li></ol>
+</div>
+
+<div class="brands-wrap">
+  <h2>📊 品牌舆情画像</h2>
+  <div class="brand-cards">
+    <div class="brand-card">
+      <div class="brand-head">
+        <h3>X线 <span class="stage">成熟</span></h3>
+        <div class="brand-kpis">
+          <span><b>15</b> 恶评帖</span>
+          <span class="danger"><b>15</b> 未维护</span>
+          <span><b>13</b> 恶评评论</span>
+          <span>互动 <b>292</b></span>
+        </div>
+      </div>
+      <div class="sect"><div class="sect-title">🔥 吐槽词 TOP</div><div><span class="chip chip-warn">发热 × 4</span><span class="chip chip-warn">不要买 × 2</span><span class="chip chip-warn">退货 × 2</span><span class="chip chip-warn">垃圾 × 2</span><span class="chip chip-warn">推荐大疆 × 1</span><span class="chip chip-warn">劝退 × 1</span><span class="chip chip-warn">别买 × 1</span><span class="chip chip-warn">太贵 × 1</span></div></div>
+      
+    </div>
+    
+
+    <div class="brand-card">
+      <div class="brand-head">
+        <h3>Go线 <span class="stage">成熟</span></h3>
+        <div class="brand-kpis">
+          <span><b>10</b> 恶评帖</span>
+          <span class="danger"><b>10</b> 未维护</span>
+          <span><b>8</b> 恶评评论</span>
+          <span>互动 <b>595</b></span>
+        </div>
+      </div>
+      <div class="sect"><div class="sect-title">🔥 吐槽词 TOP</div><div><span class="chip chip-warn">发热 × 4</span><span class="chip chip-warn">画质差 × 2</span><span class="chip chip-warn">还是买大疆 × 1</span><span class="chip chip-warn">智商税 × 1</span><span class="chip chip-warn">烫手 × 1</span></div></div>
+      
+    </div>
+    
+
+    <div class="brand-card">
+      <div class="brand-head">
+        <h3>Luna <span class="stage">预热</span></h3>
+        <div class="brand-kpis">
+          <span><b>8</b> 恶评帖</span>
+          <span class="danger"><b>8</b> 未维护</span>
+          <span><b>9</b> 恶评评论</span>
+          <span>互动 <b>230</b></span>
+        </div>
+      </div>
+      <div class="sect"><div class="sect-title">🔥 吐槽词 TOP</div><div><span class="chip chip-warn">还是大疆 × 3</span><span class="chip chip-warn">劝退 × 1</span><span class="chip chip-warn">退货 × 1</span><span class="chip chip-warn">水军 × 1</span><span class="chip chip-warn">翻车 × 1</span><span class="chip chip-warn">踩坑 × 1</span><span class="chip chip-warn">韭菜 × 1</span><span class="chip chip-warn">割韭菜 × 1</span></div></div>
+      
+    </div>
+    
+
+    <div class="brand-card">
+      <div class="brand-head">
+        <h3>影翎A1 <span class="stage">新品</span></h3>
+        <div class="brand-kpis">
+          <span><b>7</b> 恶评帖</span>
+          <span class="danger"><b>7</b> 未维护</span>
+          <span><b>6</b> 恶评评论</span>
+          <span>互动 <b>470</b></span>
+        </div>
+      </div>
+      <div class="sect"><div class="sect-title">🔥 吐槽词 TOP</div><div><span class="chip chip-warn">水军 × 2</span><span class="chip chip-warn">退货 × 2</span><span class="chip chip-warn">炸机 × 2</span></div></div>
+      <div class="sect"><div class="sect-title">🎯 被拉踩的竞品</div><div><span class='chip'>大疆 × 1</span></div></div>
+    </div>
+    </div>
+</div>
+
+<div class="main">
+  <div>
+    <h2>📄 恶评帖清单（按未维护+互动量降序）</h2>
+    <div class="posts">
+      
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">X线</span> <span class="badge" style="background:#8b0000">主楼强恶评</span> <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: 影石X4</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/6667d924000000001d018157?xsec_token=ABbcp6uE3MRAtRLHyWx3isKvHJjz-Y_nFrIYOZDP3J1zE=&xsec_source=" target="_blank">影石360X4避雷（真实体验）鸡肋</a></div>
+        <div class="post-meta">
+          <span>作者: master 泽</span>
+          <span>发布: 2024-06-11</span>
+          <span>互动: 3 / 13 / 赞</span>
+          <span>采集: 2026-05-06T21:37</span>
+        </div>
+        <div class="post-desc">买的升级版摩托车套餐/128G存储 发热量巨大，掉电巨快，就打开什么也不干温度嗖嗖地往上涨，电量肉眼可见的掉。这些都可以忍了，反正插我摩托车上可以边充电边录，然而内存还是小，录两个五十分钟左右的视频内存就不够用了，还得删前边的。在那个App里导出视频真的慢到死，就导个8分钟的视频差不多也得一个小时，这到底咋回事#数码</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 3 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">熊大</span>
+              <span class="neg-level" style="color:#b8860b">[medium]</span>
+              <span class="neg-reason">[quality] 发热 / [quality] 画质差</span>
+            </div>
+            <div class="neg-content">其实全景玩的是剪辑，画质差发热耗电快对于这个产品来说很正常，因为那么小一个机器在那里，如果手机一直录像也是一样的，没有不过热的运动相机，毕竟才小几千块钱的小体积集成了那么多东西，你甚至找不到能对标他的产品，其实行不行是对比来的。</div>
+          </div>
+        
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">踏雪无痕</span>
+              <span class="neg-level" style="color:#c1272d">[strong]</span>
+              <span class="neg-reason">[dissuade] 退货</span>
+            </div>
+            <div class="neg-content">我是实测8k和5.7k在空调房25度环境里，都是只能录制35分钟，出现过热关机情况。已经退货。</div>
+          </div>
+        
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">大宝.图图の麻麻</span>
+              <span class="neg-level" style="color:#c1272d">[strong]</span>
+              <span class="neg-reason">[dissuade] 退货</span>
+            </div>
+            <div class="neg-content">前天买的出去录视频回来剪辑卡的要死，传数据也热的要死，考虑要不要退货了。真是醉了</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/6667d924000000001d018157?xsec_token=ABbcp6uE3MRAtRLHyWx3isKvHJjz-Y_nFrIYOZDP3J1zE=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">Go线</span>  <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: Insta360 GO3</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/68a85c3c000000001d019c76?xsec_token=AB_1kvDGgtLovwpppzW-waQWrh08lOHDqJB_jUwJ13gU8=&xsec_source=" target="_blank">影石 Go 系列到底怎么选！？一图看懂💥</a></div>
+        <div class="post-meta">
+          <span>作者: 蛙趣机</span>
+          <span>发布: 2025-08-22</span>
+          <span>互动: 2 / 8 / 1</span>
+          <span>采集: 2026-05-06T21:38</span>
+        </div>
+        <div class="post-desc">想入影石 Go 运动相机的宝子看过来👀
+今天给大家整理了 Go3/Go3S/Ultra 参数对比❗️看完不纠结～
+按需求闭眼入，有任何疑问可以在评论区一起讨论！欢迎留言
+#影石Go #运动相机 #数码选购 #影石Insta360 #影石GOultra #运动相机 #vlog相机#vlog拍摄设备  #相机推荐</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 2 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">NPC路人</span>
+              <span class="neg-level" style="color:#b8860b">[medium]</span>
+              <span class="neg-reason">[quality] 发热</span>
+            </div>
+            <div class="neg-content">拍视频稍微时间长点是不是还是会发热严重？</div>
+          </div>
+        
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">身无分文</span>
+              <span class="neg-level" style="color:#b8860b">[medium]</span>
+              <span class="neg-reason">[quality] 发热</span>
+            </div>
+            <div class="neg-content">问下，会发热吗，续航多久</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/68a85c3c000000001d019c76?xsec_token=AB_1kvDGgtLovwpppzW-waQWrh08lOHDqJB_jUwJ13gU8=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">X线</span> <span class="badge" style="background:#8b0000">主楼强恶评</span> <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: Insta360 X3</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/671f138a000000001b02ed9d?xsec_token=ABjZYleI0_v_QlDhDHE3GzapVegY9xA2ER1lzWL3gHJp4=&xsec_source=" target="_blank">影石360X3避雷</a></div>
+        <div class="post-meta">
+          <span>作者: 领导夹菜我转桌</span>
+          <span>发布: 2024-10-28</span>
+          <span>互动: 3 / 5 / 赞</span>
+          <span>采集: 2026-05-06T21:37</span>
+        </div>
+        <div class="post-desc">事情是这样的，今年春节买了一个影视360X3，然后想着拿它来做摩托车的行车记录仪，同时有空拍一点好的视频。
+然而，却没有想到，一段糟心的事就此开始了。这个玩意儿拍个大概十分钟左右，自己就会发烫发烫了以后，然后就会卡死我一度以为是内存卡的问题，然后我从三星的内存卡换成了官方的内存卡，然而仍然没有改善。
+难道影石的质量就这样？@影石Insta360 @影石Insta360技术君</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 2 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">A你别皱眉i</span>
+              <span class="neg-level" style="color:#b8860b">[medium]</span>
+              <span class="neg-reason">[quality] 发热</span>
+            </div>
+            <div class="neg-content">找售后看能不能换，我的边充边拍，虽然发热，但没出过这问题</div>
+          </div>
+        
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">起名太难</span>
+              <span class="neg-level" style="color:#b8860b">[medium]</span>
+              <span class="neg-reason">[quality] 死机</span>
+            </div>
+            <div class="neg-content">我那个充电都发烫了，用着用着还死机</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/671f138a000000001b02ed9d?xsec_token=ABjZYleI0_v_QlDhDHE3GzapVegY9xA2ER1lzWL3gHJp4=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">Luna</span>  <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: 影石Luna</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/69e0e9c1000000002103bfd3?xsec_token=ABPMofO8l3nr8yNWHVizZmXNV7ltbRNlX1EFy-suUuPGk=&xsec_source=" target="_blank">(无标题)</a></div>
+        <div class="post-meta">
+          <span>作者: 揽风挽你</span>
+          <span>发布: 04-16 甘肃</span>
+          <span>互动: 赞 / 回复 / 2</span>
+          <span>采集: 2026-05-06T20:40</span>
+        </div>
+        <div class="post-desc">已入手pocket4，但又想等等影石luna……
+到底选哪个啊#大疆 #pocket4 #影石 #影石luna</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 2 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">揽风挽你</span>
+              <span class="neg-level" style="color:#c1272d">[strong]</span>
+              <span class="neg-reason">[smear] 水军</span>
+            </div>
+            <div class="neg-content">妈呀 我这里这两天怎么突然有这么多大疆水军</div>
+          </div>
+        
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">儬儬</span>
+              <span class="neg-level" style="color:#c1272d">[strong]</span>
+              <span class="neg-reason">[smear] 翻车</span>
+            </div>
+            <div class="neg-content">大疆色彩和生态更成熟，日常用不翻车</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/69e0e9c1000000002103bfd3?xsec_token=ABPMofO8l3nr8yNWHVizZmXNV7ltbRNlX1EFy-suUuPGk=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">X线</span> <span class="badge" style="background:#8b0000">主楼强恶评</span> <span class="badge" style="background:#c48200">疑似水军×1</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: Insta360 X4</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/68ac2e70000000001d020133?xsec_token=ABrwss0pUpoLh47HcRkQBjX0xoqI9_ds_bEdmrtANZo3w=&xsec_source=" target="_blank">无人在意的角落默默避雷insta360全景相机</a></div>
+        <div class="post-meta">
+          <span>作者: 无事小神仙</span>
+          <span>发布: 2025-08-25</span>
+          <span>互动: 1 / 4 / 赞</span>
+          <span>采集: 2026-05-06T21:36</span>
+        </div>
+        <div class="post-desc">去新疆提前租了x4 主要看中小行星效果 除此之外好像没有优点 画质不如大疆或者手机 每次操作都要重新连接 机身容易发烫 五天就拿出来用了6次 全程没充过电#运动相机拍摄 #影石x4</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 2 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">造心</span>
+              <span class="neg-level" style="color:#b8860b">[medium]</span>
+              <span class="neg-reason">[quality] 发热</span>
+            </div>
+            <div class="neg-content">这类相机除了运动或者趣味视角以外，旅游其实真没啥必要买，像素不如手机还及其发热</div>
+          </div>
+        
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">松树上的枫叶</span>
+              <span class="neg-level" style="color:#b8860b">[medium]</span>
+              <span class="neg-reason">[quality] 发热</span>
+            </div>
+            <div class="neg-content">全景相机的芯片性能比较强 发热可以理解 话说你要是不想每次都重连的话 可以不让它自动关机哇 关机了Wi-Fi肯定就断了呀 但不用的时候也一直待机的话 估计续航会短点儿</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/68ac2e70000000001d020133?xsec_token=ABrwss0pUpoLh47HcRkQBjX0xoqI9_ds_bEdmrtANZo3w=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">Luna</span>  <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: Insta360 Luna</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/69f786fb00000000350382b1?xsec_token=AB3Iq5ZyR5m8a9acUah5v4EIbPv84bQMALB6V0z8sTvdw=&xsec_source=" target="_blank">影石Luna来了！它首先让黄牛瑟瑟发抖！</a></div>
+        <div class="post-meta">
+          <span>作者: 玩机事务所</span>
+          <span>发布: 2天前 湖北</span>
+          <span>互动: 赞 / 1 / 赞</span>
+          <span>采集: 2026-05-06T20:23</span>
+        </div>
+        <div class="post-desc">#pocket4 #影石luna</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 2 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">小依依</span>
+              <span class="neg-level" style="color:#c1272d">[strong]</span>
+              <span class="neg-reason">[bash_competitor] 还是大疆</span>
+            </div>
+            <div class="neg-content">我感觉还是大疆比较好一点吧，感觉现在敢百分百保证影石这个一代产品好使的都是广告</div>
+          </div>
+        
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">豆豆</span>
+              <span class="neg-level" style="color:#c1272d">[strong]</span>
+              <span class="neg-reason">[smear] 韭菜 / [smear] 割韭菜</span>
+            </div>
+            <div class="neg-content">新品卷一点对普通消费者也是好事，不用被黄牛割韭菜</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/69f786fb00000000350382b1?xsec_token=AB3Iq5ZyR5m8a9acUah5v4EIbPv84bQMALB6V0z8sTvdw=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">影翎A1</span> <span class="badge" style="background:#8b0000">主楼强恶评</span> <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: 影石影翎</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/69b94e0e0000000023011ad2?xsec_token=ABq1OuVSYOxOYbHH1isJqeyj6OXxiumGB0eMjs0OUzE18=&xsec_source=" target="_blank">第一次飞无人机，没炸机</a></div>
+        <div class="post-meta">
+          <span>作者: 小狗牛排</span>
+          <span>发布: 03-17</span>
+          <span>互动: 赞 / 1 / 赞</span>
+          <span>采集: 2026-05-06T20:59</span>
+        </div>
+        <div class="post-desc">为了夏天去海边，买了影石出的影翎全景无人机提前练练技术，操作比想象简单 是体感操作调方向和角度
+像拿电脑鼠标一样飞哪指哪，第一次太兴奋直接玩到没电，它自己靠自动返航飞回来了
+	
+#无人机新手 #无人机 #影翎a1 #影石 #全景无人机 #爱上无人机 #航拍视角看世界 #带着无人机去旅行 #无人机飞手</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 2 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">黄灿灿</span>
+              <span class="neg-level" style="color:#c1272d">[strong]</span>
+              <span class="neg-reason">[defect_accuse] 炸机</span>
+            </div>
+            <div class="neg-content">没炸机+1，本来担心手忙脚乱，结果指哪飞哪挺听话的，运镜的时候画面切换也顺</div>
+          </div>
+        
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">醉雪落</span>
+              <span class="neg-level" style="color:#c1272d">[strong]</span>
+              <span class="neg-reason">[defect_accuse] 炸机</span>
+            </div>
+            <div class="neg-content">第一次飞没炸机就值得庆祝，体感遥控确实跟手，手稳一点画面就稳了，全景模式拍出来也没歪，适合新手</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/69b94e0e0000000023011ad2?xsec_token=ABq1OuVSYOxOYbHH1isJqeyj6OXxiumGB0eMjs0OUzE18=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">影翎A1</span>  <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: 影翎A1</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/69ccf282000000001d01b59d?xsec_token=ABTR49VB9vr3WGjYyV67IfbfqG9gCm8YercvfjE7i2nQo=&xsec_source=" target="_blank">新买的影翎a1被陌生人抢注怎么办</a></div>
+        <div class="post-meta">
+          <span>作者: 小新🐜</span>
+          <span>发布: 04-01</span>
+          <span>互动: 68 / 3 / 33</span>
+          <span>采集: 2026-05-06T20:56</span>
+        </div>
+        <div class="post-desc">2025年12月9日在广州天环专卖店买的影翎a1，由于当时还没强制UOM实名注册，拖到2026年1月才想起来实名注册，机器一直在家里，显示被陌生人抢注。在UOM准备了各种材料抢注申诉，却迟迟不处理，催了UOM里面的工作人员、打了电话，发了信息，历时12天终于给我通过审核。收到审核短信天塌了，对方不注销，我依旧无法实名注册，我买的新机就这样成了板砖，想飞都申请不了，万能的薯友们，我该咋整？#无人机 </div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 1 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">momo</span>
+              <span class="neg-level" style="color:#c1272d">[strong]</span>
+              <span class="neg-reason">[dissuade] 退货</span>
+            </div>
+            <div class="neg-content">退货机</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/69ccf282000000001d01b59d?xsec_token=ABTR49VB9vr3WGjYyV67IfbfqG9gCm8YercvfjE7i2nQo=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">Luna</span>  <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: 影石Luna</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/69ec41e80000000035023f71?xsec_token=AB7HrF0EQe3-P9j6U_ZvulIcM81ahDl0cN28ONVAZK8EY=&xsec_source=" target="_blank">谁来告诉我应该怎么选</a></div>
+        <div class="post-meta">
+          <span>作者: KC</span>
+          <span>发布: 04-25 辽宁</span>
+          <span>互动: 102 / 19 / 16</span>
+          <span>采集: 2026-05-06T20:39</span>
+        </div>
+        <div class="post-desc">谁来告诉我应该怎么选？是现在入DJI还是等Luna#影石insta360 #大疆 #Luna #Pocket4 #相机</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 1 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">🍙（闲置版）</span>
+              <span class="neg-level" style="color:#c1272d">[strong]</span>
+              <span class="neg-reason">[dissuade] 劝退</span>
+            </div>
+            <div class="neg-content">luna我很喜欢 可是莱卡劝退我拍亚洲人太丑了 我等pocket4 pro</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/69ec41e80000000035023f71?xsec_token=AB7HrF0EQe3-P9j6U_ZvulIcM81ahDl0cN28ONVAZK8EY=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">Go线</span>  <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: Insta360 GO3</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/67614256000000000b00ce07?xsec_token=AB966FtwrctxOi-LXWbjQrB8cg20N-ru-RcOdw5TTXjNg=&xsec_source=" target="_blank">这鬼东西真难用啊 没发过一条 视频难导出</a></div>
+        <div class="post-meta">
+          <span>作者: 橘仔的窝</span>
+          <span>发布: 2024-12-17</span>
+          <span>互动: 42 / 35 / 赞</span>
+          <span>采集: 2026-05-06T21:38</span>
+        </div>
+        <div class="post-desc">太难用了[失望R][失望R][失望R]
+买的时候很开心 保护套 包装盒 贴膜全安排
+用起来废了
+录了很多视频 手机根本导不出 因为太大了
+用电脑导出又很慢很慢
+.
+	
+本人摄影师 购入录第一视角 记录生活
+没成功一条 我认真的…
+画质不好
+拍一会没电了 还发烫 又要充电
+.
+#影石insta360 #影石拇指相机go3 #影石拇指相机go3s #影石</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 1 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">lee</span>
+              <span class="neg-level" style="color:#b8860b">[medium]</span>
+              <span class="neg-reason">[quality] 画质差</span>
+            </div>
+            <div class="neg-content">转转回收了，画质差就算了，没有地平线矫正，拍出来还是歪的[笑哭R]</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/67614256000000000b00ce07?xsec_token=AB966FtwrctxOi-LXWbjQrB8cg20N-ru-RcOdw5TTXjNg=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">Go线</span> <span class="badge" style="background:#8b0000">主楼强恶评</span> <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: 影石GO</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/69d4d281000000001a0285f3?xsec_token=AB_5vesi4Ic_Is6SruuKz8PgAhXavrU3UI9p8CDKndfc8=&xsec_source=" target="_blank">劝退我买影石360GoUltra</a></div>
+        <div class="post-meta">
+          <span>作者: 全世界种满香菜</span>
+          <span>发布: 编辑于 04-09 河北</span>
+          <span>互动: 29 / 17 / 29</span>
+          <span>采集: 2026-05-06T21:33</span>
+        </div>
+        <div class="post-desc">一人一条劝退我买影石360GoUltra，最近想买的心到达了巅峰，加上这几天价格优惠还想入手啊，但是又怕吃灰，最近胖了很多也不想怎么记录生活，出去玩也不多，啊啊啊啊但是还想买怎么办（已买，实用的配件可以发我了！）#运动相机 #影石360相机 #影石goultra #摄影装备怎么选</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 1 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">再吃一颗葡萄</span>
+              <span class="neg-level" style="color:#c1272d">[strong]</span>
+              <span class="neg-reason">[bash_competitor] 还是买大疆</span>
+            </div>
+            <div class="neg-content">我看到要出hellokitty联名，好烦哦，买这个还是买大疆pocket4</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/69d4d281000000001a0285f3?xsec_token=AB_5vesi4Ic_Is6SruuKz8PgAhXavrU3UI9p8CDKndfc8=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">影翎A1</span>  <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: 影石影翎</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/69ce65b3000000001a02eeda?xsec_token=AB0zV3I1YIecDTp4fDbtUIsQ84FyCyK4p_KF9zmwShxVM=&xsec_source=" target="_blank">航拍圈大动作，你们听说了吗🤔</a></div>
+        <div class="post-meta">
+          <span>作者: 小潘</span>
+          <span>发布: 04-02</span>
+          <span>互动: 6 / 3 / 赞</span>
+          <span>采集: 2026-05-06T20:57</span>
+        </div>
+        <div class="post-desc">两款全景无人机双重大动作来袭💥大疆Avata360全新发布，影翎A1春季活动立减 1300，好多人问这两款咋选！特意整理了无人机 + 飞行眼镜 + APP 的全维度对比表📊内容超详细！
+#影石 #全景无人机 #无人机 #影翎A1 #大疆avata360 #大疆</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 1 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">记录的地平线</span>
+              <span class="neg-level" style="color:#c1272d">[strong]</span>
+              <span class="neg-reason">[smear] 水军</span>
+            </div>
+            <div class="neg-content">多少钱一条，影石花钱请的水军真多，现在影翎降价都卖不动了，能骗一个是一个对吧</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/69ce65b3000000001a02eeda?xsec_token=AB0zV3I1YIecDTp4fDbtUIsQ84FyCyK4p_KF9zmwShxVM=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">X线</span>  <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: Insta360 X5</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/683da2540000000003038a92?xsec_token=AB_kzZfS0lf1FdBSXkrtjCpBkc9UTTxQNRDspfDKElMEo=&xsec_source=" target="_blank">(无标题)</a></div>
+        <div class="post-meta">
+          <span>作者: love kenty😍</span>
+          <span>发布: 2025-06-02</span>
+          <span>互动: 12 / 19 / 3</span>
+          <span>采集: 2026-05-06T21:35</span>
+        </div>
+        <div class="post-desc">姐妹们买大疆pocket3还是insta360  x5啊，能否给个建议，纠结中#大疆pocket3 #影石X5</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 1 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">老陈爱骑跑</span>
+              <span class="neg-level" style="color:#c1272d">[strong]</span>
+              <span class="neg-reason">[dissuade] 劝退 / [dissuade] 不要买</span>
+            </div>
+            <div class="neg-content">玩全景相机的三个门槛，过不去的不要买。 第一：个人必须出镜，不喜出镜的不要买（想后期裁剪出镜画画的也不要买）；​第二：喜欢折腾。全景能全拍到不用考虑画面，但后期剪辑需学习，相机WiFi导入手机需要时间，成片导出需要时间。相当考验耐心，和手机性能。短视频还可以，长视频劝退。电脑剪辑也考验主机性能。想即拍即分享的不要买。​第三：喜静不喜动的人不要买。全景相机两个镜头是6mm超广角焦段，适合大场景，展现人与环境的状态。不推荐拍局部人像和物品细节。不经常旅游，或者没有户外运动习惯的不要买，买了吃灰。</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/683da2540000000003038a92?xsec_token=AB_kzZfS0lf1FdBSXkrtjCpBkc9UTTxQNRDspfDKElMEo=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">X线</span>  <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: Insta360 X5</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/684bdd910000000023017fb1?xsec_token=AB4O2eB3JtHuJfgbuaSCRkMPBJhD5w642E5MWchdacQRw=&xsec_source=" target="_blank">(无标题)</a></div>
+        <div class="post-meta">
+          <span>作者: 爱吃狗粮的柠檬精</span>
+          <span>发布: 编辑于 2025-06-13</span>
+          <span>互动: 17 / 13 / 4</span>
+          <span>采集: 2026-05-06T21:35</span>
+        </div>
+        <div class="post-desc">insta360x5能平面拍摄吗，是所有都是全景360吗，如果是我放弃入手了#运动相机拍摄 #摄影知识分享 #手机长焦 #摄影干货 #摄像机拍摄 #不同设备之间的色彩差 #摄像机 #外接摄像头 #长焦空间压缩感 #取景框的世界</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 1 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">正版流浪猫</span>
+              <span class="neg-level" style="color:#c1272d">[strong]</span>
+              <span class="neg-reason">[dissuade] 别买</span>
+            </div>
+            <div class="neg-content">拍照画质不行，没有全景需求别买360</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/684bdd910000000023017fb1?xsec_token=AB4O2eB3JtHuJfgbuaSCRkMPBJhD5w642E5MWchdacQRw=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">Go线</span> <span class="badge" style="background:#8b0000">主楼强恶评</span> <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: Insta360 GO3</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/682b591200000000230149af?xsec_token=ABa_or0eTcJGyZDbVJRG4r6hHsp1qVvmay0D3zuoTcjXo=&xsec_source=" target="_blank">Insta360 Go3劝退篇</a></div>
+        <div class="post-meta">
+          <span>作者: 若渝</span>
+          <span>发布: 2025-05-20</span>
+          <span>互动: 15 / 13 / 5</span>
+          <span>采集: 2026-05-06T21:38</span>
+        </div>
+        <div class="post-desc">劝退篇（本来用途是记录一胎宝宝的生活-结果难评）
+缺点让人积累（吐槽篇）
+360go3大家谨慎下单，本人是go3一直落灰中
+1️⃣机身容易发烫：
+在录制两分钟左右开始发烫（长时间录制的姐妹注意⚠️了）
+2️⃣画质：
+之内有灯管的情况下真心好模糊，心累
+3️⃣延迟：
+画质➕延迟，可以说是儿童相机了积累
+4️⃣👌：
+比较好的就是便捷、小巧可以多角度拍摄、导出视频较速度快.
+新出的go3s不知道如何，但</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 1 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">Das ist Chen（是柚子呀）</span>
+              <span class="neg-level" style="color:#b8860b">[medium]</span>
+              <span class="neg-reason">[quality] 发热</span>
+            </div>
+            <div class="neg-content">出门第一视角 出差Vlog 骑行vlog 萌娃视角这些都试过了 感觉还好没啥问题 机器发热倒是有 可能我没放在扩展仓 没这么严重 拇指相机主打的就是一个小巧 随处放随处拍 磁吸机身遇到铁直接放 </div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/682b591200000000230149af?xsec_token=ABa_or0eTcJGyZDbVJRG4r6hHsp1qVvmay0D3zuoTcjXo=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">Luna</span>  <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: 影石Luna</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/69d91ecb0000000023012415?xsec_token=ABj-GdF9wGCGw2lCRlGS_PLDlKpp-xMSVjHT_fphehn7Q=&xsec_source=" target="_blank">pocket4和影石Luna怎么选</a></div>
+        <div class="post-meta">
+          <span>作者: Lín | 吱吱</span>
+          <span>发布: 04-11 福建</span>
+          <span>互动: 24 / 1 / 2</span>
+          <span>采集: 2026-05-06T20:41</span>
+        </div>
+        <div class="post-desc">#帮忙选一下 #pocket4 #Pocket4预售 #影石luna</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 1 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">淡淡</span>
+              <span class="neg-level" style="color:#c1272d">[strong]</span>
+              <span class="neg-reason">[dissuade] 踩坑</span>
+            </div>
+            <div class="neg-content">Luna 刚出初代，很多细节优化还是未知数，想稳妥不踩坑，直接入手 P4 就够了</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/69d91ecb0000000023012415?xsec_token=ABj-GdF9wGCGw2lCRlGS_PLDlKpp-xMSVjHT_fphehn7Q=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">Go线</span> <span class="badge" style="background:#8b0000">主楼强恶评</span> <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: Insta360 GO3</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/661696f3000000001b00e7ae?xsec_token=ABDJUqjxtj_xjRebjFK6mjA1BZhzihDN_aBz5A64DwH0o=&xsec_source=" target="_blank">Vlog相机｜i人必备go3拇指相机是智商税？🔥</a></div>
+        <div class="post-meta">
+          <span>作者: Samantha显倩</span>
+          <span>发布: 2024-04-10</span>
+          <span>互动: 1 / 15 / 2</span>
+          <span>采集: 2026-05-06T21:38</span>
+        </div>
+        <div class="post-desc">看了很多博主测评笔记，褒贬不一～
+	
+✨主角：影石Insta360 go3 运动相机📷
+📣号称：i人必备的vlog拍摄神器
+📷特点：
+·拇指相机精致小巧，轻松出行
+·磁吸式解放双手，可拍D一人称视角
+·镜头可拍摄的视角丰富新奇
+·5米防水，比较耐用
+·水平矫正和防抖科技，拍片流畅
+·还可语音控制拍摄
+	
+但是为什么我拍出来画质没法看‼️
+我也是才收到相机，还没有来得及研究以上那些功能，我只想要基本</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 1 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">Maxxu&Jo</span>
+              <span class="neg-level" style="color:#c1272d">[strong]</span>
+              <span class="neg-reason">[smear] 智商税</span>
+            </div>
+            <div class="neg-content">不算智商税，主要都当主摄拍，画质肯定不行，只能做副摄拍特别视角，其实形态很好，就是画质太拉，比手机广角还差点</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/661696f3000000001b00e7ae?xsec_token=ABDJUqjxtj_xjRebjFK6mjA1BZhzihDN_aBz5A64DwH0o=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">X线</span>  <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: Insta360 X5</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/68ad2fbd000000001d023dc9?xsec_token=ABtvB0yCwLJfH22t5Cua5LwKjAgAaJnbTlS8M7EeGbKds=&xsec_source=" target="_blank">【三张图告诉你怎么选全景相机？】</a></div>
+        <div class="post-meta">
+          <span>作者: 林山姆</span>
+          <span>发布: 2025-08-26</span>
+          <span>互动: 2 / 6 / 10</span>
+          <span>采集: 2026-05-06T21:35</span>
+        </div>
+        <div class="post-desc">①全景相机以前只有影石，现在多了大疆，那就可以来做对比参考，帮助你做购买决策。
+	
+②消费级“蓝海”结束，但细分“深蓝”刚开始——会拍的不想买，想买的人还不会拍，教育和生态仍是增量关键。
+#数码大玩家 #运动相机 #摄影知识分享 #我的Vlog神器 #摄影装备怎么选 #影石X5 #大疆osmo360 #摄影入门 #运动相机拍摄 #摄影干货</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 1 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">嗯。</span>
+              <span class="neg-level" style="color:#c1272d">[strong]</span>
+              <span class="neg-reason">[bash_competitor] 推荐大疆</span>
+            </div>
+            <div class="neg-content">就是想拍旅游的推荐大疆还是影石</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/68ad2fbd000000001d023dc9?xsec_token=ABtvB0yCwLJfH22t5Cua5LwKjAgAaJnbTlS8M7EeGbKds=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">影翎A1</span>  <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: 影石影翎</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/69c7d82e000000001b001f36?xsec_token=ABykDVy546ufMvf9FqygSrKjfK4LGpopPew0IMr5j6zng=&xsec_source=" target="_blank">(无标题)</a></div>
+        <div class="post-meta">
+          <span>作者: Zero.</span>
+          <span>发布: 03-28</span>
+          <span>互动: 6 / 14 / 2</span>
+          <span>采集: 2026-05-06T20:58</span>
+        </div>
+        <div class="post-desc">影翎A1除了贵还有什么缺点？#影翎A1 #影石 #影石无人机</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 1 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">AM Bro.</span>
+              <span class="neg-level" style="color:#c1272d">[strong]</span>
+              <span class="neg-reason">[smear] 水军</span>
+            </div>
+            <div class="neg-content">缺点是没有大疆那么多水军</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/69c7d82e000000001b001f36?xsec_token=ABykDVy546ufMvf9FqygSrKjfK4LGpopPew0IMr5j6zng=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">X线</span> <span class="badge" style="background:#b8860b">主楼缺点吐槽</span> <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: 影石X5</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/688cb5930000000023027252?xsec_token=ABy1Lyh1SNHm86nvh1Yo5xrFQOVVE9zNxxt4tpS5hRtFs=&xsec_source=" target="_blank">大疆osmo360vs影石360x5，自费购买对比分享</a></div>
+        <div class="post-meta">
+          <span>作者: 每日清晨</span>
+          <span>发布: 2025-08-01</span>
+          <span>互动: 5 / 10 / 1</span>
+          <span>采集: 2026-05-06T21:35</span>
+        </div>
+        <div class="post-desc">馋全景相机很久了，但是一直等大疆，大疆发布后直接下单了两家的，寻思对比一下留下其中一个（行为不是很道德，但我确实头一次看，因为现在网上的都是商单和拉踩）
+	
+对于我的选择，首先我说我一直以来的大前提，我们日常用的话最新的设备规格都是够的，我觉得画质都是行的，大疆和影石也做得都没问题，因为自身的调教风格有所不同，我不去对比，我买这类产品就只是根据自己的需求来对比，就像如果大疆一直不出我会买一个x4，</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 1 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">👶🏼</span>
+              <span class="neg-level" style="color:#b8860b">[medium]</span>
+              <span class="neg-reason">[price] 太贵 / [price] 贵了</span>
+            </div>
+            <div class="neg-content">X5太贵了，现在在X4和osmo360之间选哪个好点呢，虽然知道大疆的硬件好，但是考虑app和软件之后价格就差两三百不知道买哪个好了</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/688cb5930000000023027252?xsec_token=ABy1Lyh1SNHm86nvh1Yo5xrFQOVVE9zNxxt4tpS5hRtFs=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">Go线</span> <span class="badge" style="background:#8b0000">主楼强恶评</span> <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: 影石GO3</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/66b1eb840000000005023291?xsec_token=ABioWV1u1oeSOqGqVPqTULkMGayrrnayEVVhN9HX7gyJ4=&xsec_source=" target="_blank">影石insta360 go3缺点避雷</a></div>
+        <div class="post-meta">
+          <span>作者: 可爱小狗神秘消失事件</span>
+          <span>发布: 编辑于 2024-08-06</span>
+          <span>互动: 1 / 15 / 赞</span>
+          <span>采集: 2026-05-06T21:39</span>
+        </div>
+        <div class="post-desc">128g go3上车啦，看测评和宣传还蛮不错的，但到手感觉一般般，优缺点挺明显的
+大的缺点我认为是续航和发热问题。
+续航在全部充满的状态下大概能用一个多小时，具体时间没算过，但是不高于一个半小时。使用的时候电池电量是以肉眼可见的速度下降的[捂脸R]对我这种有续航焦虑的人而言挺焦虑的，总担心玩的时候没电。摄像头和充电仓都没电的时候需要一个半小时以上的时间充电，有人说要两个小时[石化R]而且不支持快充</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 1 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">老刘忙</span>
+              <span class="neg-level" style="color:#b8860b">[medium]</span>
+              <span class="neg-reason">[quality] 发热 / [quality] 烫手</span>
+            </div>
+            <div class="neg-content">你用其他机子一样发热 我的gopro都烫手</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/66b1eb840000000005023291?xsec_token=ABioWV1u1oeSOqGqVPqTULkMGayrrnayEVVhN9HX7gyJ4=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">Luna</span>  <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: 影石Luna</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/69cf4c85000000002103adab?xsec_token=ABHUDXl2PyXRzV3kDSzOwl19papVCoYohFXtybSzAujZw=&xsec_source=" target="_blank">大疆pocket4pro 还是影石luna！</a></div>
+        <div class="post-meta">
+          <span>作者: 八十万军教头林黛玉</span>
+          <span>发布: 04-03</span>
+          <span>互动: 赞 / 1 / 3</span>
+          <span>采集: 2026-05-06T21:26</span>
+        </div>
+        <div class="post-desc">看朋友们大疆p3视频拍出来的都好好看，但是好像还是不够清晰也可能发出去时候压缩画质。主要喜欢拍人像和视频，很期待长焦！！！ 我有大疆的麦，但是感觉luna会比p4pro 便宜，而且还有莱卡滤镜，但是我是因为看到p3效果好才想买的。好纠结！，#决赛圈 #我的Vlog神器 #大疆pocket3 #luna #选哪个</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 1 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">超级困</span>
+              <span class="neg-level" style="color:#c1272d">[strong]</span>
+              <span class="neg-reason">[bash_competitor] 还是大疆</span>
+            </div>
+            <div class="neg-content">喜欢人像拍摄还是大疆更贴合日常审美</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/69cf4c85000000002103adab?xsec_token=ABHUDXl2PyXRzV3kDSzOwl19papVCoYohFXtybSzAujZw=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">影翎A1</span> <span class="badge" style="background:#8b0000">主楼强恶评</span> <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: 影石A1</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/69be68e00000000023012d11?xsec_token=AB1xhfOB9Bw0E2Kij0vDXOzn2mFEojxJycjGUoROOgJWg=&xsec_source=" target="_blank">(无标题)</a></div>
+        <div class="post-meta">
+          <span>作者: 小季崽子</span>
+          <span>发布: 03-21</span>
+          <span>互动: 1 / 4 / 1</span>
+          <span>采集: 2026-05-06T21:27</span>
+        </div>
+        <div class="post-desc">买了个影石的影翎A 1也就是antigravity ，体验非常不好，炸机了就往消费者身上推责任。以后再也不会买了，慎重，强烈不联系购买</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 1 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">Todd 不是 Tod</span>
+              <span class="neg-level" style="color:#c1272d">[strong]</span>
+              <span class="neg-reason">[dissuade] 退货</span>
+            </div>
+            <div class="neg-content">要么就是无理取闹，想通过网络压力给他免费换机或者退货</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/69be68e00000000023012d11?xsec_token=AB1xhfOB9Bw0E2Kij0vDXOzn2mFEojxJycjGUoROOgJWg=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">Go线</span>  <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: Insta360 GO3</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/682c9b2a0000000021002396?xsec_token=ABhrHKMKz5ZEvn3rCvsGMDPb_A88kZBpFLe_pmUIf8C1s=&xsec_source=" target="_blank">‼️Vlog相机怎么选？大疆和影石参数对比</a></div>
+        <div class="post-meta">
+          <span>作者: 拍视频的小虎</span>
+          <span>发布: 编辑于 2025-05-22</span>
+          <span>互动: 1 / 1 / 4</span>
+          <span>采集: 2026-05-06T21:38</span>
+        </div>
+        <div class="post-desc">对比了大疆Pocket3，大疆Action5Pro，影石Go3s，影石insta360 x5的详细参数和购买建议。
+	
+这类运动相机和vlog相机选起来不算特别难，因为形态差异还是很明显的，主打vlog，主打全景，主打轻便，主打极限运动，基本还是很明确的，唯一比较难抉择估计是action5pro和acepro2了。
+	
+其实大部分人会更喜欢选pocket3，因为拍出来的效果确实很好，传感器，夜景表</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 1 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">XX在露营</span>
+              <span class="neg-level" style="color:#b8860b">[medium]</span>
+              <span class="neg-reason">[quality] 画质差</span>
+            </div>
+            <div class="neg-content">手持5pro感觉画质差一些 不考虑pk3 还有别的选择吗</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/682c9b2a0000000021002396?xsec_token=ABhrHKMKz5ZEvn3rCvsGMDPb_A88kZBpFLe_pmUIf8C1s=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">X线</span> <span class="badge" style="background:#8b0000">主楼强恶评</span> <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: 影石X3</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/665057680000000015011b2a?xsec_token=ABYVDK0EEJS6wSMf8znEpsSVLiHooBPI-h39ZpQ7_u0DQ=&xsec_source=" target="_blank">运动相机大疆Action4、影石x3 360全景怎么选</a></div>
+        <div class="post-meta">
+          <span>作者: 左眼皮跳跳</span>
+          <span>发布: 编辑于 2024-05-24</span>
+          <span>互动: 1 / 3 / 赞</span>
+          <span>采集: 2026-05-06T21:37</span>
+        </div>
+        <div class="post-desc">大疆Ation4用了快十个月了，整体来说，表现非常优秀，它的卡扣设计，很喜欢，那个“咔”的声音，听着真的很爽！
+现在骑行用，画面很丝滑！
+但是前几天下雨，有点进水，开关机的声音有点闷，咱就说，不是裸机防水吗？第二天，可能没水了，声音就正常了。
+缺点是，骑行的话，用它不能拍自己，除非调转镜头，当然，调整的话，需要先拿下来，虽说一拿一按的事儿，但对于骑行来说，不太行！太不方便！
+滑雪的话，没问题，毕竟</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 1 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">在路上的BIN</span>
+              <span class="neg-level" style="color:#c1272d">[strong]</span>
+              <span class="neg-reason">[smear] 垃圾 / [dissuade] 不要买</span>
+            </div>
+            <div class="neg-content">360画质太垃圾 不要买</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/665057680000000015011b2a?xsec_token=ABYVDK0EEJS6wSMf8znEpsSVLiHooBPI-h39ZpQ7_u0DQ=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">Luna</span>  <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: 影石Luna</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/69f835820000000022024217?xsec_token=ABc2G_TjSZJyS1leFSfP65YFRPrw3q_7msCkPF2JlY8h0=&xsec_source=" target="_blank">大疆pocket4p和影石luna不上市的原因</a></div>
+        <div class="post-meta">
+          <span>作者: 小翟不会拍</span>
+          <span>发布: 2天前 安徽</span>
+          <span>互动: 赞 / 回复 / 赞</span>
+          <span>采集: 2026-05-06T20:41</span>
+        </div>
+        <div class="post-desc">#大疆pocket4p #影石luna #云台相机</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 1 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">天空</span>
+              <span class="neg-level" style="color:#c1272d">[strong]</span>
+              <span class="neg-reason">[dissuade] 退货</span>
+            </div>
+            <div class="neg-content">你这对吗你，我看看谁退货，我要啊</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/69f835820000000022024217?xsec_token=ABc2G_TjSZJyS1leFSfP65YFRPrw3q_7msCkPF2JlY8h0=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">X线</span>  <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: Insta360 X3</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/66486b7e000000001303cd79?xsec_token=AB6fwlmQcGPGph_TB4DR9ccJZcG8e6RxakonTuh9bzvpc=&xsec_source=" target="_blank">(无标题)</a></div>
+        <div class="post-meta">
+          <span>作者: 老于聊滑雪</span>
+          <span>发布: 2024-05-18</span>
+          <span>互动: 赞 / 2 / 赞</span>
+          <span>采集: 2026-05-06T21:37</span>
+        </div>
+        <div class="post-desc">不测不知道，一测吓一跳，x4的续航比用了一年的x3的续航还差，而且拍摄时相机发烫严重
+#insta360 #360全景运动相机 #单板滑雪 #第一视角 #insta360x4</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 1 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">软绵绵</span>
+              <span class="neg-level" style="color:#c1272d">[strong]</span>
+              <span class="neg-reason">[smear] 垃圾</span>
+            </div>
+            <div class="neg-content">画质垃圾</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/66486b7e000000001303cd79?xsec_token=AB6fwlmQcGPGph_TB4DR9ccJZcG8e6RxakonTuh9bzvpc=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">Luna</span>  <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: Insta360 Luna</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/69f9a8a900000000380362e9?xsec_token=ABSqqHpw9SOs7zVPY3XAapzX87ktDlI2p5L5xt58Uq1Dg=&xsec_source=" target="_blank">(无标题)</a></div>
+        <div class="post-meta">
+          <span>作者: 一棵树开两种花</span>
+          <span>发布: 昨天 16:22 江苏</span>
+          <span>互动: 赞 / 回复 / 赞</span>
+          <span>采集: 2026-05-06T20:42</span>
+        </div>
+        <div class="post-desc">Zander Round影石Luna Ultra第二次测试，调色比第一次好一些，其他不能多说。#影石luna #影石insta360 #pocket4</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 1 条）</div>
+          
+          <div class="neg-comment">
+            <div class="neg-head">
+              <span class="neg-user">匿名</span>
+              <span class="neg-level" style="color:#c1272d">[strong]</span>
+              <span class="neg-reason">[bash_competitor] 还是大疆</span>
+            </div>
+            <div class="neg-content">感觉颜色还是有些过于饱和了，还是大疆色彩更真实一些</div>
+          </div>
+        
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/69f9a8a900000000380362e9?xsec_token=ABSqqHpw9SOs7zVPY3XAapzX87ktDlI2p5L5xt58Uq1Dg=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">Go线</span> <span class="badge" style="background:#8b0000">主楼强恶评</span> <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: 影石GO3</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/68cf474d0000000012020e07?xsec_token=ABHNdM4OwJNzqxr-GSJZdDLiCp1JhNzurf-eeGWQBgPBg=&xsec_source=" target="_blank">影石Go 3S真的不如大疆？一组实况给你答案…</a></div>
+        <div class="post-meta">
+          <span>作者: 叶框框</span>
+          <span>发布: 2025-09-21</span>
+          <span>互动: 10 / 2 / 191</span>
+          <span>采集: 2026-05-06T21:39</span>
+        </div>
+        <div class="post-desc">#第一视角扫街 #运动相机拍摄 #影像记录生活 #取景器的世界 #取景器里的另一个世界 #相机里的世界 #摄影第一人称视角 #镜头里的世界 #我的Vlog神器 #按下快门前的30s</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 0 条）</div>
+          <div class="neg-empty">主楼命中恶评规则，评论区未检出明确恶评</div>
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/68cf474d0000000012020e07?xsec_token=ABHNdM4OwJNzqxr-GSJZdDLiCp1JhNzurf-eeGWQBgPBg=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">Go线</span> <span class="badge" style="background:#8b0000">主楼强恶评</span> <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: 影石GO3</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/68832345000000000b02d407?xsec_token=ABkybc0-F2-BQsKf0HwmY0GtiTtDbI9_FKaY2fM58Yv-w=&xsec_source=" target="_blank">两个神仙相机，怎么选🤔</a></div>
+        <div class="post-meta">
+          <span>作者: 哞哞儿_lj</span>
+          <span>发布: 2025-07-25</span>
+          <span>互动: 37 / 15 / 8</span>
+          <span>采集: 2026-05-06T21:39</span>
+        </div>
+        <div class="post-desc">📷到底是买 大疆Pocket3 还是 影石GO 啊❓
+姐妹们，我真的纠结到头秃😭
+最近想入手一款小巧便携的vlog相机，目标锁定了这两个：
+👉 大疆Pocket3：画质听说很棒，还有云台防抖
+👉 影石GO：超轻超萌，随手一夹就能拍，但总担心画质不给力？
+🙇‍♀️但我预算只够买一个，所以想听听过来人意见！
+**这俩到底谁更值得买？
+**有没有使用一段时间的小伙伴能分享下各自的缺点？
+求真诚避雷＋安利</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 0 条）</div>
+          <div class="neg-empty">主楼命中恶评规则，评论区未检出明确恶评</div>
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/68832345000000000b02d407?xsec_token=ABkybc0-F2-BQsKf0HwmY0GtiTtDbI9_FKaY2fM58Yv-w=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">Go线</span> <span class="badge" style="background:#8b0000">主楼强恶评</span> <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: 影石GO3</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/66d13aa0000000001d03b185?xsec_token=ABY0ZNc3QAfSVlCRSuGTUaC_6kaEPgujMap_wcuOg4blA=&xsec_source=" target="_blank">影石Go3画质劝退🥲不要盲目冲啊</a></div>
+        <div class="post-meta">
+          <span>作者: 小瓶盖的极简生活</span>
+          <span>发布: 2024-08-30</span>
+          <span>互动: 4 / 9 / 1</span>
+          <span>采集: 2026-05-06T21:39</span>
+        </div>
+        <div class="post-desc">体积是真的小！方便也是方便的。
+画质真的不好，和我的iPhone14pro体积相比。大概是三分之一。
+在阳台拍还挺不错的，但是室内都不行，拍女儿的脸会模糊到有马赛克的很严重程度！
+只能去公园拍拍，或者明亮场景。还是不如GoPro。GoPro也买了，感觉挂脖不够轻盈，不如Go3。毕竟磁吸真的很方便！！！自由选择吧。但我不会常用，还是佳能最方便！下个月会冲一下大疆无人机！不知会不会劝退。
+	
+#数码发</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 0 条）</div>
+          <div class="neg-empty">主楼命中恶评规则，评论区未检出明确恶评</div>
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/66d13aa0000000001d03b185?xsec_token=ABY0ZNc3QAfSVlCRSuGTUaC_6kaEPgujMap_wcuOg4blA=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">X线</span> <span class="badge" style="background:#8b0000">主楼强恶评</span> <span class="badge" style="background:#c48200">疑似水军×1</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: Insta360 X3</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/682f227100000000220355d8?xsec_token=AB6ktRyHmreJJtqPu3c2uBG--zzgiDltrUw7Iw6AyakRQ=&xsec_source=" target="_blank">全景相机劝退还是种草</a></div>
+        <div class="post-meta">
+          <span>作者: jideio</span>
+          <span>发布: 2025-05-22</span>
+          <span>互动: 7 / 8 / 1</span>
+          <span>采集: 2026-05-06T21:37</span>
+        </div>
+        <div class="post-desc">想买全景相机是为了可以拍出小星球的角度，感觉很有意思，但是听说需要一定剪辑，感觉有点麻烦？有人可以分享一下经验吗？要是买的话，买x3可以吗虽然出到5了，但是只为这个功能不求多高画质应该可以不？#相机推荐 #新手入门相机 #旅游自拍神器 #全景相机 #影石 #insta360 #求助 #劝退 #种草</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 0 条）</div>
+          <div class="neg-empty">主楼命中恶评规则，评论区未检出明确恶评</div>
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/682f227100000000220355d8?xsec_token=AB6ktRyHmreJJtqPu3c2uBG--zzgiDltrUw7Iw6AyakRQ=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">X线</span> <span class="badge" style="background:#8b0000">主楼强恶评</span> <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: Insta360 X4</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/666bd793000000001d0162b1?xsec_token=ABj5u57WHLRNy9tLvHikXRwLOhHewPf7yDBgOp456UBM8=&xsec_source=" target="_blank">Insta360 X4是我买过不稳定问题最多的产品</a></div>
+        <div class="post-meta">
+          <span>作者: 小蚂蚁</span>
+          <span>发布: 2024-06-14</span>
+          <span>互动: 1 / 回复 / 1</span>
+          <span>采集: 2026-05-06T21:36</span>
+        </div>
+        <div class="post-desc">购买Insta360 X4全景相机快一个月时间了，之前在用的是他们公司的X3和Flow。本来X3用的还是挺稳定的，就是画质实在太差，我前面发的有三四个视频里就是有X3拍摄的片段。很多时候拍的视频没发看。所以就想更新X4试试，这就让我遇到了个大坑。
+	
+这些天我发现了它有以下7个问题，这些问题除了第[二R]、[五R]、[六R]出现的不频繁偶发无法拍视频之外，其他的问题当时为了反馈给官方客服我都拍了视</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 0 条）</div>
+          <div class="neg-empty">主楼命中恶评规则，评论区未检出明确恶评</div>
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/666bd793000000001d0162b1?xsec_token=ABj5u57WHLRNy9tLvHikXRwLOhHewPf7yDBgOp456UBM8=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">X线</span> <span class="badge" style="background:#8b0000">主楼强恶评</span> <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: Insta360 X5</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/684a9c600000000021001f74?xsec_token=AB0f3EbfBNy6z3RWE2Kot4eBl6wU-QTUPNwmXujq1lMuc=&xsec_source=" target="_blank">你关心的X5问题的答案，都在这里了~</a></div>
+        <div class="post-meta">
+          <span>作者: 三石四季五味生活</span>
+          <span>发布: 编辑于 2025-06-12</span>
+          <span>互动: 1 / 11 / 赞</span>
+          <span>采集: 2026-05-06T21:35</span>
+        </div>
+        <div class="post-desc">家人们，磊叔用 X5 有一段时间了，摸索出了一些使用心得💡，今天就来和大家好好唠唠
+	
+纯纯是用心❤️整理的干货，大家喜欢可以收藏哦！​
+	
+先说说哪些人适合入手 X5
+要是你平时爱拍 VLOG，或者经常来一场说走就走的旅行，那 X5 是比较值得入手的。我当初也在 pocket3 和 X5 之间纠结过，最后还是被全景相机的 "先拍摄，后取景" 打动了
+全景相机最大的优势就是，绝大多数的拍摄瑕疵都可</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 0 条）</div>
+          <div class="neg-empty">主楼命中恶评规则，评论区未检出明确恶评</div>
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/684a9c600000000021001f74?xsec_token=AB0f3EbfBNy6z3RWE2Kot4eBl6wU-QTUPNwmXujq1lMuc=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">X线</span> <span class="badge" style="background:#8b0000">主楼强恶评</span> <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: Insta360 X5</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/6946b229000000001e00547e?xsec_token=AB2HWHdNs169UE8HoMRn0DMSj_6NXEV1cxSpCvztCcYzY=&xsec_source=" target="_blank">劝退！Insta360 X5真的别买❌人在欧洲旅行</a></div>
+        <div class="post-meta">
+          <span>作者: 航航仔</span>
+          <span>发布: 2025-12-20</span>
+          <span>互动: 6 / 5 / 2</span>
+          <span>采集: 2026-05-06T21:28</span>
+        </div>
+        <div class="post-desc">心态崩了
+	
+🆘 真的心碎！正在欧洲环球旅行，目前在布拉格，后天就去瑞士了🇨🇭，后面还有十几个国家要走，结果 Insta360 X5的自拍杆居然断了！！ 本想记录下最美的瞬间，现在设备直接变废铁。伸长不了，子弹时间也拍不了，在国外人生地不熟，且线下门店几乎没有，想买配件都难，这质量真的对得起它的价格吗？😭3300入手2025年9🈷️
+	
+这次购物体验真的让我对影石彻底下头，汇总几大槽点，大家千万别</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 0 条）</div>
+          <div class="neg-empty">主楼命中恶评规则，评论区未检出明确恶评</div>
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/6946b229000000001e00547e?xsec_token=AB2HWHdNs169UE8HoMRn0DMSj_6NXEV1cxSpCvztCcYzY=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">影翎A1</span> <span class="badge" style="background:#8b0000">主楼强恶评</span> <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: 影翎A1</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/698d8c2c000000001a025a27?xsec_token=ABhHx1BMNT7-i8fkAIQw1nsZux_otwVvpY5d00mE5EBto=&xsec_source=" target="_blank">影翎无人机 a1 炸机记录</a></div>
+        <div class="post-meta">
+          <span>作者: 哟</span>
+          <span>发布: 编辑于 02-24</span>
+          <span>互动: 2 / 回复 / 12</span>
+          <span>采集: 2026-05-06T21:26</span>
+        </div>
+        <div class="post-desc">当天拿到无人机直接试飞，起飞后开始录像，6 分钟低电量自动返航，然后对着大楼就撞上去了，尸体如图   26.2.14 更新售后服务进度，无人机本体和电池损坏严重，补了九百多给我换了新的无人机和电池，等更新完之后还是一条好汉，这次更新完先去买一下安心飞，先试飞场多练练在去室外驰骋吧#影翎A1 #影翎</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 0 条）</div>
+          <div class="neg-empty">主楼命中恶评规则，评论区未检出明确恶评</div>
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/698d8c2c000000001a025a27?xsec_token=ABhHx1BMNT7-i8fkAIQw1nsZux_otwVvpY5d00mE5EBto=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">X线</span> <span class="badge" style="background:#8b0000">主楼强恶评</span> <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: 影石全景相机</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/68abd34c000000001c007e28?xsec_token=AB0UdNigbA0FhzaEh5JU0na04wryo_U5gl29GCLVfdMm4=&xsec_source=" target="_blank">要不要买全景相机</a></div>
+        <div class="post-meta">
+          <span>作者: Faaaa</span>
+          <span>发布: 2025-08-25</span>
+          <span>互动: 3 / 3 / 赞</span>
+          <span>采集: 2026-05-06T21:38</span>
+        </div>
+        <div class="post-desc">求问大家买全景相机主要用来干啥？
+不咋运动的话要买全景吗
+如果买全景相机来拍vlog的话，大家是只有这一台设备吗，还是有其他拍摄普通视角的设备？
+#要不要买全景相机，大家为啥买？[投票]#
+#vlog #全景相机 #大疆 #影石 #运动相机</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 0 条）</div>
+          <div class="neg-empty">主楼命中恶评规则，评论区未检出明确恶评</div>
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/68abd34c000000001c007e28?xsec_token=AB0UdNigbA0FhzaEh5JU0na04wryo_U5gl29GCLVfdMm4=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">影翎A1</span> <span class="badge" style="background:#8b0000">主楼强恶评</span> <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: 影石影翎</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/69d10a83000000002302074d?xsec_token=ABU9YtHIHUS982A3jx5rONS2-hJz1u0iccVhi4zTbSsFI=&xsec_source=" target="_blank">全景无人机纠结中 看完这篇不踩坑</a></div>
+        <div class="post-meta">
+          <span>作者: 猪同学186cm</span>
+          <span>发布: 04-04</span>
+          <span>互动: 3 / 2 / 赞</span>
+          <span>采集: 2026-05-06T21:01</span>
+        </div>
+        <div class="post-desc">同样是无人机，飞起来才知道，从拍到出片的路子完全不一样！
+#全景无人机 #影翎A1 #影石 #无人机 #大疆avata360 #大疆</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 0 条）</div>
+          <div class="neg-empty">主楼命中恶评规则，评论区未检出明确恶评</div>
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/69d10a83000000002302074d?xsec_token=ABU9YtHIHUS982A3jx5rONS2-hJz1u0iccVhi4zTbSsFI=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">X线</span> <span class="badge" style="background:#8b0000">主楼强恶评</span> <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: 影石X3</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/6931bb8a000000001f008b0b?xsec_token=AB4XeW6-Ioei7Z2-SqCv6VJCm1t6aRDAJvCWvZeTmMzHQ=&xsec_source=" target="_blank">别买影石x3的镜头保护盖了</a></div>
+        <div class="post-meta">
+          <span>作者: Joy</span>
+          <span>发布: 2025-12-05</span>
+          <span>互动: 1 / 2 / 赞</span>
+          <span>采集: 2026-05-06T21:31</span>
+        </div>
+        <div class="post-desc">不太建议买这个东西，以前用第一代的保护盖的时候就经常出现莫名其妙的光斑，还经常容易起雾。用了第二代之后光斑还是有些存在,也还起雾。之前拍完之后就放到收纳包里没用过了，今天一看裂了一个口子。花这么多钱买这个感觉不太值，不如不装#影石x3#运动相机</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 0 条）</div>
+          <div class="neg-empty">主楼命中恶评规则，评论区未检出明确恶评</div>
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/6931bb8a000000001f008b0b?xsec_token=AB4XeW6-Ioei7Z2-SqCv6VJCm1t6aRDAJvCWvZeTmMzHQ=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+      <div class="post-card">
+        <div class="post-head">
+          <span class="badge" style="background:#2a5cb3">Luna</span> <span class="badge" style="background:#8b0000">主楼强恶评</span> <span class="badge" style="background:#c1272d">⚠ 未维护</span>
+          <span class="platform">xiaohongshu</span>
+          <span class="kw">关键词: Insta360 Luna</span>
+        </div>
+        <div class="post-title"><a href="https://www.xiaohongshu.com/search_result/69fa93f4000000001e00ed86?xsec_token=ABpfpFhYX2tGgMt4fKKdWKj6CaFzbFijM2_Ia01HSn6N8=&xsec_source=" target="_blank">影石Luna Ultra实拍泄露：光学虚化人像！</a></div>
+        <div class="post-meta">
+          <span>作者: 大胡聊机</span>
+          <span>发布: 11小时前 河南</span>
+          <span>互动: 赞 / 回复 / 1</span>
+          <span>采集: 2026-05-06T20:44</span>
+        </div>
+        <div class="post-desc">外媒TheNewCamera拿到了一组影石Insta360 Luna Ultra的人像样张和一支新预告片。
+	
+这张人像样张是Luna Ultra视频截帧，背景虚化呈现出奶油般自然的散景，而不是算法硬抠的模糊块；
+人物面部与背景之间有清晰的立体景深过渡，发丝边缘没有常见的手机人像模式翻车痕迹；
+肤色呈现带有徕卡特有的细腻微反差，不磨皮不假面。
+这种光学质感，通常需要全画幅相机配大光圈镜头才能拍出来</div>
+        <div class="neg-list">
+          <div class="neg-title">恶评摘录（共 0 条）</div>
+          <div class="neg-empty">主楼命中恶评规则，评论区未检出明确恶评</div>
+        </div>
+        <div class="actions">
+          <a class="btn" href="https://www.xiaohongshu.com/search_result/69fa93f4000000001e00ed86?xsec_token=ABpfpFhYX2tGgMt4fKKdWKj6CaFzbFijM2_Ia01HSn6N8=&xsec_source=" target="_blank">📎 打开原帖校准</a>
+        </div>
+      </div>
+    
+    </div>
+  </div>
+  <div class="side">
+    <div class="side-box">
+      <h3>📌 品牌 × 未维护</h3>
+      <table><thead><tr><td>品牌</td><td>恶评帖</td><td>未维护</td></tr></thead><tr><td>X线</td><td>15</td><td class='danger-txt'>15</td></tr><tr><td>Go线</td><td>10</td><td class='danger-txt'>10</td></tr><tr><td>Luna</td><td>8</td><td class='danger-txt'>8</td></tr><tr><td>影翎A1</td><td>7</td><td class='danger-txt'>7</td></tr></table>
+    </div>
+    <div class="side-box">
+      <h3>🏷 恶评类型 TOP10</h3>
+      <table><tr><td>劝退退货</td><td>26</td></tr><tr><td>质量吐槽</td><td>12</td></tr><tr><td>黑稿/造谣</td><td>11</td></tr><tr><td>拉踩竞品</td><td>8</td></tr><tr><td>故障指控</td><td>6</td></tr><tr><td>价格吐槽</td><td>1</td></tr></table>
+    </div>
+    <div class="side-box">
+      <h3>🎪 竞品提及 TOP10</h3>
+      <table><tr><td>大疆</td><td>1</td></tr></table>
+    </div>
+    <div class="side-box">
+      <h3>📘 判定规则</h3>
+      <div style="font-size:12px; color:#c5cad5; line-height:1.7;">
+        <b>强恶评</b>：拉踩竞品 / 造谣黑料 / 劝退退货 / 故障指控<br>
+        <b>中恶评</b>：具体缺点吐槽（发热/续航/做工/价格/软件）<br>
+        <b>未维护</b>：评论区无影石官方/客服认证账号回复<br>
+        <b>疑似水军</b>：超短纯夸 + 模板化用语（需复核真实性）
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
